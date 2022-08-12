@@ -1,0 +1,2 @@
+#V2
+open /home/kaori/ToDo.txt

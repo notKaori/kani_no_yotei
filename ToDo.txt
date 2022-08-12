@@ -1,0 +1,4 @@
+get this to read a file
+get this to save list to a file
+get this to read out item from index
+command handling
