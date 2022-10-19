@@ -2,6 +2,16 @@ use rustyline::error::ReadlineError;
 use rustyline::{Editor, Result};
 use std::{fs, fs::File, io::BufRead, io::BufReader, path::Path};
 
+fn print(printable_set: &Vec<String>) -> Result<()> {
+    if printable_set.len < 1 {
+        println!("Cannot print empty list");
+        return;
+    }
+    for m in printable_set {
+        println!("{}", m)
+    }
+}
+
 fn main() -> Result<()> {
     let mut history = Editor::<()>::new()?;
     if history.load_history("history.txt").is_err() {
@@ -33,14 +43,16 @@ fn main() -> Result<()> {
                             .lines()
                             .map(|l| l.expect("Could not parse line"))
                             .collect();
-                        for m in &set {
-                            println!("{}", m);
-                        }
+                        print(&set);
+                        // for m in &set {
+                        //     println!("{}", m);
+                        // }
                     }
                     "print" => {
-                        for m in &set {
-                            println!("{}", m);
-                        }
+                        print(&set);
+                        // for m in &set {
+                        //     println!("{}", m);
+                        // }
                     }
                     "q" => std::process::exit(1),
                     "save" => {
