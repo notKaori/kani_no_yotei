@@ -1,16 +1,8 @@
 use rustyline::error::ReadlineError;
 use rustyline::{Editor, Result};
-use std::{fs, fs::File, io::BufRead, io::BufReader, path::Path};
+use std::{env, fs, fs::File, io::BufRead, io::BufReader, path::Path};
 
-fn print(printable_set: &Vec<String>) -> Result<()> {
-    if printable_set.len < 1 {
-        println!("Cannot print empty list");
-        return;
-    }
-    for m in printable_set {
-        println!("{}", m)
-    }
-}
+// Struct Session;
 
 fn main() -> Result<()> {
     let mut history = Editor::<()>::new()?;
@@ -19,49 +11,79 @@ fn main() -> Result<()> {
     }
     let mut set = Vec::<String>::new();
     let mut rl = history;
+    let cur_dir = env::current_dir().unwrap();
+    let mut filpath = cur_dir.as_path();
     loop {
         let readline = rl.readline(">> ");
         match readline {
             Ok(line) => {
+                let qpath = filpath;
                 let entry = line.as_str();
                 rl.add_history_entry(entry);
-                let mut command = line.splitn(2, " ");
-                let exec = command.next().unwrap();
-                let operand = command.next().unwrap();
-                match exec {
-                    "add" => {
-                        let to_do = operand.to_string();
-                        println!("You'd like to add {}", to_do);
-                        set.push(to_do);
+                let spaces = entry.matches(" ").count();
+                if spaces == 0 {
+                    match entry {
+                        "save" => {
+                            let default_path;
+                            let path;
+                            if set.first() == None {
+                                println!("Please enter at least 1 task before saving");
+                                path = qpath;
+                            } else if filpath == cur_dir.as_path() {
+                                default_path = format!("{}/ToDo.txt", qpath.display());
+                                path = Path::new(&default_path);
+                            } else {
+                                path = qpath;
+                            }
+                            let squash = set.join("\n");
+                            let filstr = path;
+                            println!("saving {:?}", filstr);
+                            fs::write(filstr, squash).expect("Unable to write file");
+                        }
+                        "print" => {
+                            for m in &set {
+                                println!("{}", m);
+                            }
+                        }
+                        _ => println!("incorrect"),
                     }
-                    "open" => {
-                        let buf = BufReader::new(
-                            File::open(Path::new(operand)).expect("Unable to open file"),
-                        );
-                        println!("Opening file: ");
-                        set = buf
-                            .lines()
-                            .map(|l| l.expect("Could not parse line"))
-                            .collect();
-                        print(&set);
-                        // for m in &set {
-                        //     println!("{}", m);
-                        // }
+                } else {
+                    let mut command = entry.splitn(2, " ");
+                    let exec = command.next().unwrap();
+                    let operand = command.next().unwrap();
+                    match exec {
+                        "add" => {
+                            let to_do = operand.to_string();
+                            println!("You'd like to add {}", to_do);
+                            set.push(to_do);
+                        }
+                        "open" => {
+                            filpath = Path::new(operand);
+                            let file = File::open(filpath).expect("Unable to open file");
+                            let buf = BufReader::new(file);
+                            println!("Opening file: ");
+                            set = buf
+                                .lines()
+                                .map(|l| l.expect("Could not parse line"))
+                                .collect();
+                            for m in &set {
+                                println!("{}", m);
+                            }
+                        }
+                        "print" => {
+                            for m in &set {
+                                println!("{}", m);
+                            }
+                        }
+                        "q" => std::process::exit(1),
+                        "save" => {
+                            let squash = set.join("\n");
+                            let path = Path::new(operand);
+                            println!("saving {}", squash);
+                            fs::write(path, squash).expect("Unable to write file");
+                        }
+                        _ => println!("huh?"),
                     }
-                    "print" => {
-                        print(&set);
-                        // for m in &set {
-                        //     println!("{}", m);
-                        // }
-                    }
-                    "q" => std::process::exit(1),
-                    "save" => {
-                        let squash = set.join("\n");
-                        let path = Path::new(operand);
-                        println!("saving {}", squash);
-                        fs::write(path, squash).expect("Unable to write file");
-                    }
-                    _ => println!("huh?"),
                 }
             }
             Err(ReadlineError::Interrupted) => {
