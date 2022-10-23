@@ -4,6 +4,12 @@ use std::{env, fs, fs::File, io::BufRead, io::BufReader, path::Path};
 
 // Struct Session;
 
+fn print(printable_set: &Vec<String>) {
+    for m in printable_set {
+        println!("{}", m);
+    }
+}
+
 fn main() -> Result<()> {
     let mut history = Editor::<()>::new()?;
     if history.load_history("history.txt").is_err() {
@@ -17,21 +23,22 @@ fn main() -> Result<()> {
         let readline = rl.readline(">> ");
         match readline {
             Ok(line) => {
-                let qpath = filpath;
+                let qpath = &filpath;
                 let entry = line.as_str();
-                rl.add_history_entry(entry);
+                let r = &entry;
+                rl.add_history_entry(r);
                 let spaces = entry.matches(" ").count();
                 if spaces == 0 {
                     match entry {
                         "save" => {
-                            let default_path;
+                            let path_str = format!("{}/ToDo.txt", qpath.display());
+                            let default_path = Path::new(&path_str);
                             let path;
                             if set.first() == None {
                                 println!("Please enter at least 1 task before saving");
                                 path = qpath;
                             } else if filpath == cur_dir.as_path() {
-                                default_path = format!("{}/ToDo.txt", qpath.display());
-                                path = Path::new(&default_path);
+                                path = &default_path;
                             } else {
                                 path = qpath;
                             }
@@ -41,9 +48,7 @@ fn main() -> Result<()> {
                             fs::write(filstr, squash).expect("Unable to write file");
                         }
                         "print" => {
-                            for m in &set {
-                                println!("{}", m);
-                            }
+                            print(&set);
                         }
                         _ => println!("incorrect"),
                     }
@@ -66,16 +71,11 @@ fn main() -> Result<()> {
                                 .lines()
                                 .map(|l| l.expect("Could not parse line"))
                                 .collect();
-                            for m in &set {
-                                println!("{}", m);
-                            }
+                            print(&set);
                         }
-                        "print" => {
-                            for m in &set {
-                                println!("{}", m);
-                            }
-                        }
+                        "print" => print(&set),
                         "q" => std::process::exit(1),
+                        "quit" => std::process::exit(1),
                         "save" => {
                             let squash = set.join("\n");
                             let path = Path::new(operand);
