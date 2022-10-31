@@ -1,8 +1,12 @@
 use rustyline::error::ReadlineError;
-use rustyline::{Editor, Result};
+use rustyline::{Editor, Helper, Result};
 use std::{env, fs, fs::File, io::BufRead, io::BufReader, path::Path};
 
-// Struct Session;
+struct Session {
+    set: Vec<String>,
+    mpath: dyn Path,
+    command: str,
+}
 
 fn print(printable_set: &Vec<String>) {
     for m in printable_set {
@@ -16,17 +20,17 @@ fn main() -> Result<()> {
         println!("No history found");
     }
     let mut set = Vec::<String>::new();
-    let mut rl = history;
+    //let mut rl = history;
     let cur_dir = env::current_dir().unwrap();
     let mut filpath = cur_dir.as_path();
     loop {
-        let readline = rl.readline(">> ");
+        let readline = history.readline(">> ");
         match readline {
             Ok(line) => {
+                history.add_history_entry(&line);
                 let qpath = &filpath;
                 let entry = line.as_str();
-                let r = &entry;
-                rl.add_history_entry(r);
+                //history.add_history_entry(entry);
                 let spaces = entry.matches(" ").count();
                 if spaces == 0 {
                     match entry {
@@ -100,5 +104,5 @@ fn main() -> Result<()> {
             }
         }
     }
-    rl.save_history("history.txt")
+    history.save_history("history.txt")
 }
