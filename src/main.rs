@@ -1,10 +1,9 @@
 use rustyline::error::ReadlineError;
-use rustyline::{Editor, Helper, Result};
+use rustyline::{Editor, Result};
 use std::{env, fs, fs::File, io::BufRead, io::BufReader, path::Path};
 
 struct Session {
     set: Vec<String>,
-    mpath: dyn Path,
     command: str,
 }
 
