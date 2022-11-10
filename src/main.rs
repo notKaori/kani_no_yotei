@@ -15,7 +15,7 @@ fn print(printable_set: &Vec<String>) {
 
 fn parse_command(command: String) -> Result<()> {
     match command {
-        Ok(line) => {
+        Ok() => {
             // history.add_history_entry(&line);
             // let qpath = &filpath;
             let entry = line.as_str();
@@ -79,18 +79,6 @@ fn parse_command(command: String) -> Result<()> {
                 }
             }
         }
-        Err(ReadlineError::Interrupted) => {
-            println!("C+C");
-            break;
-        }
-        Err(ReadlineError::Eof) => {
-            println!("C+D");
-            break;
-        }
-        Err(err) => {
-            println!("error: {:?}", err);
-            break;
-        }
     }
 }
 
@@ -105,7 +93,21 @@ fn main() -> Result<()> {
     let mut filpath = cur_dir.as_path();
     loop {
         let readline = history.readline(">> ");
-        parse_command(readline);
+        match parse_command(readline.unwrap()) {
+            Ok{}
+            Err(ReadlineError::Interrupted) => {
+                println!("C+C");
+                break;
+            }
+            Err(ReadlineError::Eof) => {
+                println!("C+D");
+                break;
+            }
+            Err(err) => {
+                println!("error: {:?}", err);
+                break;
+            }
+        }
     }
     history.save_history("history.txt")
 }
