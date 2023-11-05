@@ -14,8 +14,8 @@ fn print(printable_set: &Vec<String>) {
 }
 
 fn parse_command(command: String) -> Result<()> {
-    match command {
-        Ok() => {
+    match command.as_str() {
+        Ok(line) => {
             // history.add_history_entry(&line);
             // let qpath = &filpath;
             let entry = line.as_str();
