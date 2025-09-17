@@ -1,4 +1,3 @@
-get this to read a file
-get this to save list to a file
-get this to read out item from index
-command handling
+do laundry @ 2025-09-17 20:19
+test my program @ 2025-09-16 20:45
+Third task
