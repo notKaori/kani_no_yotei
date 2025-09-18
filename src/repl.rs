@@ -108,6 +108,7 @@ pub fn parse_repl_command(line: &str) -> Option<Commands> {
         }
         "clear" => Some(Commands::Clear),
         "which" => Some(Commands::Which),
+        "setup" => Some(Commands::Setup),
         "notify" => {
             let mut minutes_before = 15;
             let mut verbose = false;

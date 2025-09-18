@@ -1,10 +1,10 @@
-use anyhow::{Context, Result};
+use anyhow::Result;
 use clap::Parser;
 use rustyline::error::ReadlineError;
 use rustyline::Editor;
-use std::{env, fs::File, io::BufRead, io::BufReader};
+use std::env;
 
-use kani_no_yotei::{Cli, Task, execute_clap_command, parse_repl_command};
+use kani_no_yotei::{Cli, TaskStore, execute_clap_command, parse_repl_command};
 
 fn main() -> Result<()> {
     // Parse command line arguments with clap
@@ -13,29 +13,14 @@ fn main() -> Result<()> {
     // Handle command line arguments
     if let Some(command) = cli.command {
         // One-off command mode
-        let mut set = Vec::<Task>::new();
         let cur_dir = env::current_dir().unwrap();
-        let mut filpath = cur_dir.join("ToDo.txt");
+        let mut filepath = cur_dir.join("tasks.json");
         
-        // Load existing tasks if file exists
-        if filpath.exists() {
-            let file = File::open(&filpath)
-                .with_context(|| "Unable to open ToDo.txt")?;
-            let buf = BufReader::new(file);
-            let lines: Vec<String> = buf
-                .lines()
-                .collect::<std::result::Result<Vec<_>, _>>()
-                .with_context(|| "Failed to read file lines")?;
-            
-            set = lines
-                .into_iter()
-                .filter(|line| !line.trim().is_empty())
-                .map(|line| Task::from_string(&line))
-                .collect::<Result<Vec<_>, _>>()?;
-        }
+        // Load existing tasks if file exists, otherwise create new store
+        let mut store = TaskStore::load_from_file(&filepath)?;
         
         // Execute command with auto-save enabled for one-off mode
-        execute_clap_command(command, &mut set, &mut filpath, true)?;
+        execute_clap_command(command, &mut store, &mut filepath, true, cli.debug)?;
         return Ok(());
     }
     
@@ -46,32 +31,16 @@ fn main() -> Result<()> {
     }
     
     // Initialize task storage and file path
-    let mut set = Vec::<Task>::new();
     let cur_dir = env::current_dir().unwrap();
-    let mut filpath = cur_dir.join("ToDo.txt");
+    let mut filepath = cur_dir.join("tasks.json");
     
-    // Automatically open ToDo.txt on startup
-    if filpath.exists() {
-        let file = File::open(&filpath)
-            .with_context(|| "Unable to open ToDo.txt")?;
-        let buf = BufReader::new(file);
-        println!("Opening default file: ToDo.txt");
-        let lines: Vec<String> = buf
-            .lines()
-            .collect::<std::result::Result<Vec<_>, _>>()
-            .with_context(|| "Failed to read file lines")?;
-        
-        set = lines
-            .into_iter()
-            .filter(|line| !line.trim().is_empty())
-            .map(|line| Task::from_string(&line))
-            .collect::<Result<Vec<_>, _>>()?;
-        
-        if !set.is_empty() {
-            kani_no_yotei::task::print_tasks(&set);
-        }
+    // Load existing tasks if file exists, otherwise create new store
+    let mut store = TaskStore::load_from_file(&filepath)?;
+    
+    if store.is_empty() {
+        println!("No tasks found, starting with empty task list");
     } else {
-        println!("ToDo.txt not found, starting with empty task list");
+        println!("Loaded {} tasks from tasks.json", store.len());
     }
     
     // Main command loop - continues until user exits
@@ -87,7 +56,7 @@ fn main() -> Result<()> {
                     _ => {
                         // Try to parse as a REPL command
                         if let Some(command) = parse_repl_command(&line) {
-                            if let Err(e) = execute_clap_command(command, &mut set, &mut filpath, false) {
+                            if let Err(e) = execute_clap_command(command, &mut store, &mut filepath, false, false) {
                                 eprintln!("Error: {}", e);
                             }
                         } else {
